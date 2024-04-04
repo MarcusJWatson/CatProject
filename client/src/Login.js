@@ -96,8 +96,10 @@ function LoginForm(){
     const [email, setEmail] = useState()
     const [password, setPassword] = useState()
     const nav = useNavigate();
+    
 
     if(localStorage.getItem("token")){
+        const user = JSON.parse(localStorage.getItem("user"))
         //check if there is currently a session token/valid one
         const token = JSON.parse(localStorage.getItem("token"))
         if (token && token.expirationDate) {
@@ -106,7 +108,7 @@ function LoginForm(){
             
             if (currentDate < expirationDate) {
                 // Token is still valid
-                nav("/DashBoard")
+                nav(`/${user.type}`)
             } 
         }
     }
@@ -118,7 +120,7 @@ function LoginForm(){
             if(result.data.status == "success"){
                 localStorage.setItem("token", JSON.stringify(result.data.token))
                 localStorage.setItem("user", JSON.stringify(result.data.user))
-                nav("/DashBoard")
+                nav(`/${result.data.user.type}`)
             }
             else console.log(result.data.reason)
         })
@@ -254,7 +256,7 @@ function CreateSellerForm(){
                 }
             })
             .then(result => {console.log(result)
-                navigate("/login")
+                navigate("/Login")
             })
             .catch(err=> openModal("Login Failed",`Account Creation Failed: ${err.response.data.reason}`))
         }
@@ -356,7 +358,7 @@ function CreateBuyerForm(){
                 }
             })
             .then(result => {console.log(result)
-                navigate("/login")
+                navigate("/Login")
             })
             .catch(err=> openModal("Login Failed",`Account Creation Failed: ${err.response.data.reason}`))
         }
