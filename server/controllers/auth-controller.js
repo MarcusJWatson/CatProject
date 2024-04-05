@@ -1,7 +1,7 @@
 const User = require('../models/user-model');
 const argon = require("argon2");
 const sessionAuth = require("./session-control");
-const { signUpOAuth } = require("./google-oauth");
+const { canSignUpOAuth } = require("./google-oauth");
 const { fbOauthLogin } = require("./fb-oauth");
 
 module.exports = {
@@ -22,15 +22,18 @@ module.exports = {
             return;
         }
 
-        if (!request.body.oauthUser && (!request.body.email || !request.body.password))
+        if (!request.body.oauthUser && (!request.body.email || !request.body.password)){
             response.status(400).send({
                 status: 'failed',
                 reason: 'not enough required information'
             });
+            return;
+        }
+
 
         const emailRegex = /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
         
-        if (!emailRegex.exec(request.body.email)) {
+        if (!request.body.oauthUser && !emailRegex.exec(request.body.email)) {
             response.status(400).send({
                 status: 'failed',
                 reason: 'That doesn\'t look like an email'
@@ -41,8 +44,8 @@ module.exports = {
         let obj = {
             firstName: request.body.firstName,
             lastName: request.body.lastName,
-            email: request.body.email,
-            password: await argon.hash(request.body.password),
+            email: (request.body.oauthUser ? null : request.body.email),
+            password: (request.body.oauthUser ? undefined : await argon.hash(request.body.password)),
             type: request.body.type,
             country: request.body.country
         };
@@ -50,12 +53,13 @@ module.exports = {
         if (request.body.oauthUser) {
             obj.OAuth = true;
             if (request.body.oauth.source === 'google') {
-                const oauthObj = await signUpOAuth(request, response);
+                const oauthObj = await canSignUpOAuth(request, response);
                 if (oauthObj === null) {
                     response.status(400).send({
                         status: 'failed',
                         reason: 'Already signed up with Google. Go to Login.'
                     });
+                    return;
                 }
                 obj.OAuthConfig = oauthObj;
             }
@@ -74,7 +78,7 @@ module.exports = {
             email: obj.email
         });
         
-        if (exists) {
+        if (exists && exists.email != null) {
             response.status(400).send({
                 status: 'failed',
                 reason: 'user with that email already exists (did you sign up with google or facebook already?)'
@@ -94,6 +98,7 @@ module.exports = {
             response.send({
                 status: 'success',
             });
+            return;
         }
         catch (e) {
             console.log(e);
@@ -101,6 +106,7 @@ module.exports = {
                 status: 'failed',
                 reason: 'database error',
             });
+            return;
         }
 
     },
@@ -126,12 +132,14 @@ module.exports = {
                     token: t,
                     user: redacted,
                 });
+                return;
             }
             else {
                 response.status(401).send({
                     status: 'failed',
                     reason: 'invalid password or email'
                 });
+                return;
             }
         }
         else {
@@ -139,6 +147,7 @@ module.exports = {
                 status: 'failed',
                 reason: 'invalid password or email'
             });
+            return;
         }
     },
     googleOauthLogin: (jwt) => {

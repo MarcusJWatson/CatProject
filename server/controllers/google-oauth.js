@@ -24,7 +24,7 @@ async function verify(jwt) {
 async function googleOAuthAlreadyExists(credential) {
     return await User.findOne({
         'OAuthConfig.credential': credential,
-        'OAuthConfig.provider': 'google',
+        'OAuthConfig.upstreamProvider': 'google',
     });
 }
 
@@ -34,8 +34,8 @@ module.exports = {
     },
 
     loginOAuth: async (req, res) => {
-        const decoded = jwtDecode.jwtDecode(req.body.jwt);
-        if (await verify(req.body.jwt)) {
+        const decoded = jwtDecode.jwtDecode(req.body.oauth.jwt);
+        if (await verify(req.body.oauth.jwt)) {
             let alreadyExists = await googleOAuthAlreadyExists(decoded.email);
             if (alreadyExists) {
                 delete alreadyExists.password;
@@ -61,17 +61,17 @@ module.exports = {
         }
     },
 
-    signUpOAuth: async (req, res) => {
+    canSignUpOAuth: async (req, res) => {
         const decoded = jwtDecode.jwtDecode(req.body.oauth.jwt);
-        const ableToAdd = !(await alreadyExists(decoded.email));
+        const ableToAdd = !(await googleOAuthAlreadyExists(decoded.email));
 
-        return (ableToAdd ? 
-                {
-                    provider: 'google',
-                    credential: decoded.email
-                }
-            :
+        return (ableToAdd ?
+            {
+                upstreamProvider: 'google',
+                credential: decoded.email
+            }:
                 null
             );
     }
+
 }

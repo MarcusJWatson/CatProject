@@ -98,6 +98,10 @@ function LoginForm(){
     const nav = useNavigate();
     
 
+    //removes google credential jwt, and provider at login screen
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("provider");
+
     if(localStorage.getItem("token")){
         const user = JSON.parse(localStorage.getItem("user"))
         //check if there is currently a session token/valid one
@@ -112,7 +116,7 @@ function LoginForm(){
             } 
         }
     }
-    
+
     const handleSubmit = (e) => {
         e.preventDefault()
         axios.post('http://localhost:5000/auth/login', {email: email, password: password})
@@ -145,12 +149,28 @@ function LoginForm(){
                     <GoogleLogin
                         onSuccess={credentialResponse => {
                             console.log(credentialResponse);
-                            axios.post('http://localhost:5000/auth/google', {
-                                jwt: credentialResponse.credential
+                            axios.post('http://localhost:5000/oauth/google', {
+                                oauth:{
+                                    jwt: credentialResponse.credential
+                                }
                             })
+                            .then(login => {
+                                if (login.data.needsSignup === true){
+                                    //logged in
+                                    nav("/SignUp")
+                                    localStorage.setItem('jwt', credentialResponse.credential)
+                                    localStorage.setItem('provider', "google")
+                                }
+                                else{
+                                    //redirect user dashboard
+                                    nav(`/login/${login.data.user.type}`)
+                                }                                
+                            })
+                            .catch(err=> openModal("Login Failed",err.response.data.reason))
                         }}
-                        onError={() => {
+                        onError={err => {
                             console.log('Login Failed');
+                            openModal("Invalid Oauth", err.response.data.reason)
                         }}
                     />
                     <FacebookLogin
@@ -229,6 +249,7 @@ const countriesList = [
 ];
 
 function CreateSellerForm(){
+    const OAuthsuccess = localStorage.getItem("jwt") !== null;
     const [firstName, setFirstName] = useState()
     const [lastName, setLastName] = useState()
     const [email, setEmail] = useState()
@@ -253,7 +274,15 @@ function CreateSellerForm(){
                     businessName: biz,
                     businessID: bin,
                     subType: subType
-                }
+                },
+                oauthUser: OAuthsuccess,
+                oauth: (
+                    !OAuthsuccess ? undefined :
+                    {
+                        source: localStorage.getItem("provider"),
+                        jwt: localStorage.getItem("jwt")
+                    } 
+                )
             })
             .then(result => {console.log(result)
                 navigate("/login")
@@ -284,6 +313,8 @@ function CreateSellerForm(){
                 <strong>Last Name</strong>
                 <input type="text" placeholder="Enter last name" onChange={(e) => setLastName(e.target.value)} />
             </div>
+            {!OAuthsuccess && (
+                <>
             <div className="InputFields">
                 <strong>Email</strong>
                 <input type="email" placeholder="Ex. Example@email.com" onChange={(e) => setEmail(e.target.value)} />
@@ -296,6 +327,8 @@ function CreateSellerForm(){
                 <strong>Confirm Password</strong>
                 <input type="password" placeholder="Enter password" onChange={(e) => setPassword2(e.target.value)} />
             </div>
+                </>
+             )}
 
             <strong>Business information</strong>
 
@@ -334,6 +367,7 @@ function CreateSellerForm(){
     )
 }
 function CreateBuyerForm(){
+    const OAuthsuccess = localStorage.getItem("jwt") !== null;
     const [firstName, setFirstName] = useState();
     const [lastName, setLastName]   = useState();
     const [email, setEmail]         = useState();
@@ -355,7 +389,15 @@ function CreateBuyerForm(){
                 buyer: {
                     interests: [interest],
                     postalCode: postal
-                }
+                },
+                oauthUser: OAuthsuccess,
+                oauth: (
+                    !OAuthsuccess ? undefined :
+                    {
+                        source: localStorage.getItem("provider"),
+                        jwt: localStorage.getItem("jwt")
+                    } 
+                )
             })
             .then(result => {console.log(result)
                 navigate("/login")
@@ -385,18 +427,22 @@ function CreateBuyerForm(){
                 <strong>Last Name</strong>
                 <input type="text" placeholder="Enter last name" onChange={(e) => setLastName(e.target.value)}/>
             </div>
+            {!OAuthsuccess && (
+                <>
             <div className="InputFields">
                 <strong>Email</strong>
-                <input type="email" placeholder="Ex. example@email.com" onChange={(e) => setEmail(e.target.value)}/>
+                <input type="email" placeholder="Ex. Example@email.com" onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="InputFields">
                 <strong>Password</strong>
-                <input type="password" placeholder="Enter a password" onChange={(e) => setPassword(e.target.value)}/>
+                <input type="password" placeholder="Enter password" onChange={(e) => setPassword(e.target.value)} />
             </div>
             <div className="InputFields">
                 <strong>Confirm Password</strong>
                 <input type="password" placeholder="Enter password" onChange={(e) => setPassword2(e.target.value)} />
             </div>
+                </>
+             )}
             <div className="InputFields">
                 <strong>Country</strong>
                 <select value={selectedCountry} onChange={handleCountryChange}>
