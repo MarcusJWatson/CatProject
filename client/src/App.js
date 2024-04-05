@@ -26,9 +26,8 @@ import Support from "./pages/support";
 import MyAccount from "./pages/dummyPages/myAccount";
 import MyFavorites from "./pages/dummyPages/myFavorites";
 import MyCart from "./pages/dummyPages/myCart";
-import Login from "./login";
 import SampleProduct from "./pages/dummyPages/sampleProduct";
-import { CreateAccountForm, CreateBuyerForm, CreateSellerForm, LoginForm, LoginScreenBase, Template } from './login';
+import { CreateAccountForm, CreateBuyerForm, CreateSellerForm, LoginForm, LoginScreenBase, Template } from './Login';
 import './index.css'; 
 
 function App() {

@@ -51,7 +51,7 @@ module.exports = {
 
             const appleKeys = await getAppleSigningKey(kid)
 
-            if(!applekey){
+            if(!appleKeys){
                 console.error('Something went Wrong')
                 return
             }
