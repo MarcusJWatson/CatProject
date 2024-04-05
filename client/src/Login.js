@@ -108,7 +108,7 @@ function LoginForm(){
             
             if (currentDate < expirationDate) {
                 // Token is still valid
-                nav(`/${user.type}`)
+                nav(`/login/${user.type}`)
             } 
         }
     }
@@ -117,10 +117,10 @@ function LoginForm(){
         e.preventDefault()
         axios.post('http://localhost:5000/auth/login', {email: email, password: password})
         .then(result => {console.log(result)
-            if(result.data.status == "success"){
+            if(result.data.status === "success"){
                 localStorage.setItem("token", JSON.stringify(result.data.token))
                 localStorage.setItem("user", JSON.stringify(result.data.user))
-                nav(`/${result.data.user.type}`)
+                nav(`/login/${result.data.user.type}`)
             }
             else console.log(result.data.reason)
         })
@@ -243,7 +243,7 @@ function CreateSellerForm(){
 
     const handleSubmit = (e) => {
         e.preventDefault()
-        if(password != password2){
+        if(password !== password2){
             openModal(`Account Creation Failed: Passwords Do Not Match`)
         }
         else{
@@ -256,7 +256,7 @@ function CreateSellerForm(){
                 }
             })
             .then(result => {console.log(result)
-                navigate("/Login")
+                navigate("/login")
             })
             .catch(err=> openModal("Login Failed",`Account Creation Failed: ${err.response.data.reason}`))
         }
@@ -346,7 +346,7 @@ function CreateBuyerForm(){
 
     const handleSubmit = (e) => {
         e.preventDefault()
-        if(password != password2){
+        if(password !== password2){
             openModal(`Account Creation Failed: Passwords Do Not Match`)
         }
         else{
@@ -358,7 +358,7 @@ function CreateBuyerForm(){
                 }
             })
             .then(result => {console.log(result)
-                navigate("/Login")
+                navigate("/login")
             })
             .catch(err=> openModal("Login Failed",`Account Creation Failed: ${err.response.data.reason}`))
         }
@@ -425,4 +425,5 @@ function CreateBuyerForm(){
     )
 }
 
+export default LoginForm
 export{Template, LoginScreenBase, LoginForm, CreateAccountForm, CreateSellerForm, CreateBuyerForm}
