@@ -89,6 +89,7 @@ module.exports = {
         try {
             if (request.body.type === 'seller') { 
                 obj.seller = request.body.seller;
+                obj.seller.subType = obj.seller.subType.toLowerCase();
             }
             else if (request.body.type === 'buyer') { 
                 obj.buyer = request.body.buyer;

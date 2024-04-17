@@ -120,11 +120,16 @@ function LoginForm(){
     const handleSubmit = (e) => {
         e.preventDefault()
         axios.post('http://localhost:5000/auth/login', {email: email, password: password})
-        .then(result => {console.log(result)
+        .then(result => {
             if(result.data.status === "success"){
                 localStorage.setItem("token", JSON.stringify(result.data.token))
                 localStorage.setItem("user", JSON.stringify(result.data.user))
-                nav(`/login/${result.data.user.type}`)
+                if (result.data.user.type === 'seller' && result.data.user.seller.subType !== undefined) {
+                    nav(`/login/${result.data.user.seller.subType.toLowerCase()}`)
+                }
+                else {
+                    nav(`/login/${result.data.user.type}`)
+                }
             }
             else console.log(result.data.reason)
         })
@@ -148,7 +153,6 @@ function LoginForm(){
                 <div className="buttonLinkContainer">
                     <GoogleLogin
                         onSuccess={credentialResponse => {
-                            console.log(credentialResponse);
                             axios.post('http://localhost:5000/oauth/google', {
                                 oauth:{
                                     jwt: credentialResponse.credential
@@ -163,8 +167,15 @@ function LoginForm(){
                                 }
                                 else{
                                     //redirect user dashboard
-                                    nav(`/login/${login.data.user.type}`)
-                                }                                
+                                    localStorage.setItem("token", JSON.stringify(login.data.token))
+                                    localStorage.setItem("user", JSON.stringify(login.data.user))
+                                    if (login.data.user.type === 'seller' && login.data.user.seller.subType !== undefined) {
+                                        nav(`/login/${login.data.user.seller.subType.toLowerCase()}`)
+                                    }
+                                    else {
+                                        nav(`/login/${login.data.user.type}`)
+                                    }
+                                }
                             })
                             .catch(err=> openModal("Login Failed",err.response.data.reason))
                         }}
@@ -284,7 +295,7 @@ function CreateSellerForm(){
                     } 
                 )
             })
-            .then(result => {console.log(result)
+            .then(result => {
                 navigate("/login")
             })
             .catch(err=> openModal("Login Failed",`Account Creation Failed: ${err.response.data.reason}`))
@@ -353,9 +364,10 @@ function CreateSellerForm(){
                 <strong>Industry Segment</strong>
                 <select onChange={changeSubType} value={subType}>
                     <option disabled selected>Select an option</option>
-                    <option>Architect</option>
+                    <option>Designer</option>
                     <option>Contractor</option>
-                    <option>CAT Employee</option>
+                    <option>Company</option>
+                    <option>Dealer</option>
                 </select>
             </div>
             <div className="InputFields">
