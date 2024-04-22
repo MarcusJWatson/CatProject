@@ -65,7 +65,7 @@ And this should return something like:
 # Back-end Authorization
 
 * Middleware is available to authenticate the requests and get the token's information from the database. This is implemented in the `controllers/session-control.js` file and should be imported as `const sessionControl = require("./path/to/controllers/session-control.js");` and referenced as `sessionControl.verifyRequest(request)`. 
-
+* Returned from `verifyRequest` is either undefined (if it's an invalid token) or a Token object with the user's ID attached. If you need to check for specific user attributes, you'll need to perform lookups for that user.
 A more full example:
 ```js
 const sessionControl = require("./controllers/session-control");
